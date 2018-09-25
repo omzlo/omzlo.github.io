@@ -4,7 +4,7 @@ To use the Nocan library in the Arduino API, you should follow the steps outline
 
 ## API
 
-To use the API, include <nocan.h> in your Arduino sketch.
+To use the API, include `<nocan.h>` in your Arduino sketch.
 
 ### Nocan.open
 
