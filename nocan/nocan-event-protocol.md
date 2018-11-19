@@ -265,7 +265,8 @@ The server will respond to this request with a **ChannelUpdateEvent**.
 ### ChannelUpdateEvent (9)
 
 A server will send a **ChannelUpdateEvent** of any change occurs on a channel
-or if it receives a **ChannelUpdateRequestEvent** from a client.
+or if it receives a **ChannelUpdateRequestEvent** from a client. Notably, a **ChannelUpdateEvent**
+will be emitted each time data is published on a channel. 
 
 The message has the following structure:
 
@@ -278,7 +279,7 @@ The Status byte can have the following values:
 | status | Description
 |--------|------
 | 0      | A channel was created.
-| 1      | A channel was updated.
+| 1      | A channel was updated, data was published on the channel.
 | 2      | A channel was destroyed.
 | 3      | The requested channel does not exist (in response to a **ChannelUpdateRequestEvent** only).
 
