@@ -70,6 +70,11 @@ const (
     NodeFirmwareDownloadEvent                = 18
     NodeFirmwareProgressEvent                = 19
     NodeRebootRequestEvent                   = 20
+    BusPowerStatusUpdateRequestEvent         = 21
+    DeviceInformationRequestEvent            = 22
+    DeviceInformationEvent                   = 23
+    SystemPropertiesRequestEvent             = 24
+    SystemPropertiesEvent                    = 25
 )
 ```
 
@@ -111,6 +116,13 @@ Examples:
 * As a 16 bit number, 258 is encoded as the string of bytes [ 0x01 0x02 ]
 * As a 32 bit number, 258 is encoded as the string of bytes [ 0x00, 0x00, 0x01 0x02 ]
 * As a 32 bit number, 3735928559 is encoded as [ 0xDE 0xAD, 0xBE, 0xEF ]
+
+### Server decoding error
+
+When a server fails to decode an event it will respond with a **ServerAckEvent**
+with an Ack code set to 1 or 4, and will close the connection.
+
+See below for further details about the **ServerAckEvent**.
 
 Event Specification
 ---------------
@@ -198,7 +210,7 @@ Once the client has received a **ServerHelloEvent**, it should proceed with a
 ### BusPowerStatusUpdateEvent (6)
 
 The server will periodically send a **BusPowerStatusUpdateEvent** message
-reflecting the power status of the NoCAN network. 
+reflecting the power status of the NoCAN network.
 
 The value of this event is structured as follows:
 
@@ -216,10 +228,10 @@ The value is encoded in big endian.
 | 1    | TX\_PENDING | The output transmission buffer of the driver is full.
 | 2    | N/A        |
 | 3    | N/A        |
-| 4    | ERROR      | An network error ocrrured.
+| 4    | ERROR      | A network error occurred.
 | 5    | FAULT      | An over-current event caused the driver to shut down power.
 | 6    | POWERED    | The network is powered.
-| 7    | CAN\_RES    | The 120 ohm termination resistor is disabled on the PiMaster. 
+| 7    | CAN\_RES    | The 120 ohm termination resistor is disabled on the PiMaster.
 
 **Voltage** is a 32 bit float representing the measured voltage on the network (e.g. 12V).
 
@@ -266,7 +278,7 @@ The server will respond to this request with a **ChannelUpdateEvent**.
 
 A server will send a **ChannelUpdateEvent** of any change occurs on a channel
 or if it receives a **ChannelUpdateRequestEvent** from a client. Notably, a **ChannelUpdateEvent**
-will be emitted each time data is published on a channel. 
+will be emitted each time data is published on a channel.
 
 The message has the following structure:
 
@@ -286,7 +298,7 @@ The Status byte can have the following values:
 The fields **Channel Id** and **Channel Name** are the same as in the
 **ChannelUpdateRequestEvent**.
 
-The field **Channel value** reprents the current content of a channel.
+The field **Channel value** represents the current content of a channel.
 It is non-empty when status is 1 (channel updated);
 in all other cases, **Channel value length** is 0 and **Channel value** is empty.
 
@@ -317,7 +329,7 @@ The client can send a **NodeUpdateRequestEvent** to request the server to send
 information about the state of a particular node in a NoCAN network.
 
 | Id     |
-|--------| 
+|--------|
 | 1 byte |
 
 **Id** is a number between 1 and 127 that identifies a node.
@@ -331,15 +343,21 @@ to a **NodeUpdateRequestEvent**.
 
 The message has the following structure:
 
-| Id     | State  | UDID
-|--------|--------|-------------------
-| 1 byte | 1 byte | 8 bytes
+| Id     | State  | UDID      | Last seen
+|--------|--------|-----------|------------
+| 1 byte | 1 byte | 8 bytes   | 8 bytes
 
-**Id** is a number between 1 and 127 uniquely identifying the node in the NoCAN network.
+**Id** is a number between 1 and 127 uniquely identifying the node in the NoCAN
+network.
 
 **State** described the current state of a node.
 
-**UDID** is a 8 byte identifier of the node, globally unique accross all NoCAN networks. 
+**UDID** is a 8 byte identifier of the node, globally unique across all NoCAN
+networks.
+
+**Last seen** is a 64 bit number, encoded with the most significant byte first,
+which represents a UTC nanosecond timestamp indicating when the node was last
+seen (time starts on Jan 1st, year 1 at 00:00:00).
 
 ### NodeListRequestEvent (14)
 
@@ -364,21 +382,21 @@ Each block in this message has the structure defined in the
 
 ### NodeFirmwareUploadEvent (16)
 
-A client will send a **NodeFirmwareUploadEvent** to upload a new firmware to a node. 
+A client will send a **NodeFirmwareUploadEvent** to upload a new firmware to a node.
 
 After the client sends this message, the server will send **NodeFirmwareProgressEvent** messages to the client
 until the firmware has been successfully uploaded.
 
-The message has the following structure, which is common to the **NodeFirmwareDownloadEvent** message event 
+The message has the following structure, which is common to the **NodeFirmwareDownloadEvent** message event
 as well as the **NodeFirmwareDownloadRequestEvent**:
 
 | Node Id | Download | Limit  | Firmware blocks
 |---------|----------|--------|-----------------
-| 1 byte  | 1 byte   | 1 byte | N bytes 
+| 1 byte  | 1 byte   | 1 byte | N bytes
 
 **Node Id** identifies the node to be updated.
 
-**Download** describes whether the event relates to firmware upload (0x00) or firmware download (0x01). 
+**Download** describes whether the event relates to firmware upload (0x00) or firmware download (0x01).
 This value is 0x00 for a **NodeFirmwareUploadEvent** and 0x01 for a **NodeFirmwareDownloadEvent**.
 
 **Limit** is used for downloas and sets a limit on the maximum number of bytes to download (this value is not
@@ -402,7 +420,7 @@ For a **NodeFirmwareDownloadEvent** a firmware block describes data that was rea
 
 For a **NodeFirmwareDownloadRequestEvent** the firmware block is empty.
 
-There is ususally only one firmware block in a **NodeFirmwareUploadEvent** or a **NodeFirmwareDownloadEvent**.
+There is usually only one firmware block in a **NodeFirmwareUploadEvent** or a **NodeFirmwareDownloadEvent**.
 
 ### NodeFirmwareDownloadRequestEvent (17)
 
@@ -411,7 +429,7 @@ A client will send a **NodeFirmwareDownloadRequestEvent** to download firmware f
 The message has the same structure as a **NodeFirmwareUploadEvent** described above, with the following specifics:
 
 - **Limit** sets the maximum flash download size, where a value of 0 means all the flash (248K).
-- **Firmware blocks** is empty and has therefore a null length. 
+- **Firmware blocks** is empty and has therefore a null length.
 
 After the client sends this message, the server will send several **NodeFirmwareProgressEvent** messages to the client
 until the firmware has been successfully downloaded.
@@ -422,7 +440,7 @@ content of the downloaded firmware.
 ### NodeFirmwareDownloadEvent (18)
 
 A server will send this message to a client once a flash download is completed, after being initiated by a
-**NodeFirmwareDownloadRequestEvent**. 
+**NodeFirmwareDownloadRequestEvent**.
 
 The message has the same structure as a **NodeFirmwareUploadEvent** described above, with the following specifics:
 
@@ -431,8 +449,8 @@ The message has the same structure as a **NodeFirmwareUploadEvent** described ab
 
 ### NodeFirmwareProgressEvent (19)
 
-During the upload or dowload of firmware, the server will send **NodeFirmwareProgressEvent** indicating the progress
-of the operation. 
+During the upload or download of firmware, the server will send **NodeFirmwareProgressEvent** indicating the progress
+of the operation.
 
 The message has the following structure:
 
@@ -442,11 +460,11 @@ The message has the following structure:
 
 **Node Id** identifies the node which is undergoing firmware upload or download.
 
-**Progress** is an integer indicating the progress of the operation expressed as a percentage (0 to 100). 
-The special value 0xFE indicates a success of the operation, while the special value 0xFF indicates a failure. 
+**Progress** is an integer indicating the progress of the operation expressed as a percentage (0 to 100).
+The special value 0xFE indicates a success of the operation, while the special value 0xFF indicates a failure.
 
-**Bytes transfered** describes the number of bytes of firmware that have been successfully uploaded or downloaded
-ignoring any additional overhead (message headers, ack messages, etc.)
+**Bytes transferred** describes the number of bytes of firmware that have been successfully uploaded or downloaded
+ignoring any additional overhead (message headers, ACK messages, etc.)
 
 ### NodeRebootRequestEvent (20)
 
@@ -461,6 +479,27 @@ The message has the following structure:
 
 **Node Id** identifies the node that must be rebooted.
 
-In response to this message, the server will send a **ServerAckEvent** message, which 
-will either indicate success (status 0x00) or that the node was not found (status 0x03).
+In response to this message, the server will send a **ServerAckEvent** message,
+which will either indicate success (status 0x00) or that the node was not found 
+(status 0x03).
 
+### BusPowerStatusUpdateRequestEvent (21)
+
+When the client sends this message, the server will respond with a
+**BusPowerStatusUpdateEvent**.
+
+### DeviceInformationRequestEvent (22)
+
+__To be detailed__
+
+### DeviceInformationEvent (23)
+
+__To be detailed__
+
+### SystemPropertiesRequestEvent (24)
+
+__To be detailed__
+
+### SystemPropertiesEvent (25)
+
+__To be detailed__
