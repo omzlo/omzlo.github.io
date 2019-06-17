@@ -133,9 +133,9 @@ specified **EventId**.
 The following figure shows an example of a **ChannelUpdate** event message.
 The **EventId** is 9, the value length is 28 and the event value is further
 broken down into subfields according to the structure of a **ChannelUpdate**
-event value. 
+event value.
 
-![](assets/pictures/channel-update-example.jpeg)
+![](../assets/pictures/channel-update-example.jpeg)
 
 ### ClientHelloEvent (1)
 
