@@ -127,6 +127,16 @@ See below for further details about the **ServerAckEvent**.
 Event Specification
 ---------------
 
+This section describes how an event **Value** is encoded, depending on the
+specified **EventId**.
+
+The following figure shows an example of a **ChannelUpdate** event message.
+The **EventId** is 9, the value length is 28 and the event value is further
+broken down into subfields according to the structure of a **ChannelUpdate**
+event value. 
+
+![](assets/pictures/channel-update-example.jpeg)
+
 ### ClientHelloEvent (1)
 
 This event is sent at the start of session by the client. It contains no value
@@ -480,7 +490,7 @@ The message has the following structure:
 **Node Id** identifies the node that must be rebooted.
 
 In response to this message, the server will send a **ServerAckEvent** message,
-which will either indicate success (status 0x00) or that the node was not found 
+which will either indicate success (status 0x00) or that the node was not found
 (status 0x03).
 
 ### BusPowerStatusUpdateRequestEvent (21)
