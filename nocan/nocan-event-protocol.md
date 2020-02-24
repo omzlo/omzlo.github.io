@@ -400,17 +400,17 @@ until the firmware has been successfully uploaded.
 The message has the following structure, which is common to the **NodeFirmwareDownloadEvent** message event
 as well as the **NodeFirmwareDownloadRequestEvent**:
 
-| Node Id | Download | Limit  | Firmware blocks
-|---------|----------|--------|-----------------
-| 1 byte  | 1 byte   | 1 byte | N bytes
+| Node Id | Download | Limit   | Firmware blocks
+|---------|----------|---------|-----------------
+| 1 byte  | 1 byte   | 4 bytes | N bytes
 
 **Node Id** identifies the node to be updated.
 
 **Download** describes whether the event relates to firmware upload (0x00) or firmware download (0x01).
 This value is 0x00 for a **NodeFirmwareUploadEvent** and 0x01 for a **NodeFirmwareDownloadEvent**.
 
-**Limit** is used for downloas and sets a limit on the maximum number of bytes to download (this value is not
-used  for a **NodeFirmwareUploadEvent**).
+**Limit** is used for downloads and sets a limit on the maximum number of bytes to download. This value is
+ignored for a **NodeFirmwareUploadEvent** and can be safely set to 0 in that case.
 
 **Firmware blocks** is an array of block of flash memory content that have the following structure.
 
