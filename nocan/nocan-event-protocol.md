@@ -1,6 +1,9 @@
 The NoCAN event protocol over TCP/IP
 ====================================
 
+**IMPORTANT This current documentation of the The NoCAN event protocol over TCP/IP is now obsolete and will need to be updated.
+See [Adding secure communications to NoCAN](https://www.omzlo.com/articles/adding-secure-communications-to-nocan) for more details.**
+
 This document describes the protocol that the `nocand` server uses to communicate
 with clients like `nocanc` over TCP/IP.
 
